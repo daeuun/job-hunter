@@ -1,0 +1,10 @@
+.gradle/
+build/
+.idea/
+*.iml
+.env
+config.json
+resume.md
+data/
+logs/
+docs/ai-tool-log.jsonl

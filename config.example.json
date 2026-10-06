@@ -1,0 +1,39 @@
+{
+  "saramin": {
+    "accessKeyEnv": "SARAMIN_ACCESS_KEY",
+    "keywords": ["Kotlin", "Spring", "백엔드"],
+    "locMcd": "",
+    "jobMidCd": "",
+    "excludeDirectHire": true,
+    "maxPagesPerKeyword": 3,
+    "initialLookbackHours": 72
+  },
+  "filter": {
+    "myExperienceYears": 2,
+    "experienceStretchYears": 1,
+    "excludeNewcomerOnly": true,
+    "excludeJobTypeKeywords": ["계약직", "파견", "인턴", "프리랜서", "위촉"],
+    "excludeTitleKeywords": ["프론트엔드", "퍼블리셔", "안드로이드", "iOS", "QA"],
+    "requireAnyKeyword": ["Kotlin", "Java", "Spring", "백엔드", "Backend", "서버"]
+  },
+  "crawler": {
+    "delayMillis": 3000,
+    "maxDetailsPerRun": 40,
+    "minTextLength": 300,
+    "maxImages": 3
+  },
+  "claude": {
+    "bin": "claude",
+    "model": "sonnet",
+    "timeoutSeconds": 240
+  },
+  "profile": {
+    "resumePath": "resume.md",
+    "preferences": ""
+  },
+  "output": {
+    "dataDir": "data",
+    "minScoreToNotify": 70,
+    "slackWebhookEnv": "SLACK_WEBHOOK_URL"
+  }
+}
