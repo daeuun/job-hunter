@@ -25,34 +25,49 @@ class SaraminClient(
     var callCount = 0
         private set
 
-    /** 키워드별로 publishedMin 이후 등록된 공고를 모두 모아 id 기준으로 중복 제거해 반환한다. */
+    /** (지역 그룹 × 키워드)별로 publishedMin 이후 등록된 공고를 모두 모아 id 기준으로 중복 제거해 반환한다. */
     fun fetchSince(publishedMin: Instant): List<JobPosting> {
         val byId = LinkedHashMap<String, JobPosting>()
-        for (keyword in config.keywords) {
-            var page = 0
-            while (page < config.maxPagesPerKeyword) {
-                val (jobs, total) = fetchPage(keyword, publishedMin, page)
-                jobs.forEach { byId.putIfAbsent(it.id, it) }
-                log("  사람인 '$keyword' page=$page → ${jobs.size}건 (total=$total)")
-                if (jobs.size < PAGE_SIZE || (page + 1) * PAGE_SIZE >= total) break
-                page++
+        val locations = config.locations.ifEmpty { listOf(LocationQuery("전체", emptyMap())) }
+        val keywords: List<String?> = config.keywords.ifEmpty { listOf(null) }
+        for (loc in locations) {
+            for (keyword in keywords) {
+                val label = listOfNotNull(loc.name, keyword?.let { "'$it'" }).joinToString(" ")
+                var page = 0
+                while (page < config.maxPagesPerQuery) {
+                    val (jobs, total) = fetchPage(loc, keyword, publishedMin, page)
+                    jobs.forEach { byId.putIfAbsent(it.id, it) }
+                    log("  사람인 [$label] page=$page → ${jobs.size}건 (total=$total)")
+                    if (jobs.size < PAGE_SIZE || (page + 1) * PAGE_SIZE >= total) break
+                    page++
+                    if (page == config.maxPagesPerQuery) {
+                        log("  ⚠ [$label] 페이지 상한(${config.maxPagesPerQuery}) 도달, 일부 공고를 못 가져왔을 수 있음")
+                    }
+                }
             }
         }
         return byId.values.toList()
     }
 
-    private fun fetchPage(keyword: String, publishedMin: Instant, page: Int): Pair<List<JobPosting>, Int> {
+    private fun fetchPage(
+        loc: LocationQuery,
+        keyword: String?,
+        publishedMin: Instant,
+        page: Int,
+    ): Pair<List<JobPosting>, Int> {
         val params = linkedMapOf(
             "access-key" to accessKey,
-            "keywords" to keyword,
             "published_min" to publishedMin.epochSecond.toString(),
             "sort" to "pd",
             "count" to PAGE_SIZE.toString(),
             "start" to page.toString(),
             "fields" to "posting-date,expiration-date",
         )
-        if (config.locMcd.isNotBlank()) params["loc_mcd"] = config.locMcd
+        if (keyword != null) params["keywords"] = keyword
+        params.putAll(loc.params)
         if (config.jobMidCd.isNotBlank()) params["job_mid_cd"] = config.jobMidCd
+        if (config.jobCd.isNotBlank()) params["job_cd"] = config.jobCd
+        if (config.indCd.isNotBlank()) params["ind_cd"] = config.indCd
         if (config.excludeDirectHire) params["sr"] = "directhire"
 
         val query = params.entries.joinToString("&") { (k, v) ->

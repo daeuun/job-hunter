@@ -7,16 +7,23 @@ import java.nio.file.Path
 
 val mapper: ObjectMapper = ObjectMapper()
 
+/** 지역 그룹 하나 = API 호출 묶음 하나. params에는 loc_cd / loc_mcd / loc_bcd 중 하나 */
+data class LocationQuery(val name: String, val params: Map<String, String>)
+
 data class SaraminConfig(
     val accessKeyEnv: String,
-    /** 키워드별로 따로 호출한다. 사람인 API는 AND/OR 연산을 지원하지 않는다. */
+    /** 키워드별로 따로 호출한다. 사람인 API는 AND/OR 연산을 지원하지 않는다. 빈 리스트면 키워드 없이 1회 */
     val keywords: List<String>,
-    /** 1차 지역 코드(복수는 쉼표). 사람인 코드표 참고. 빈 값이면 미적용 */
-    val locMcd: String,
+    /** 지역 그룹별로 따로 호출한다. 빈 리스트면 지역 필터 없음 */
+    val locations: List<LocationQuery>,
     /** 상위 직무 코드. 사람인 코드표 참고. 빈 값이면 미적용 */
     val jobMidCd: String,
+    /** 직무 코드(복수는 쉼표). 빈 값이면 미적용 */
+    val jobCd: String,
+    /** 업종 코드. 빈 값이면 미적용 */
+    val indCd: String,
     val excludeDirectHire: Boolean,
-    val maxPagesPerKeyword: Int,
+    val maxPagesPerQuery: Int,
     /** 첫 실행 시 몇 시간 전 공고부터 가져올지 */
     val initialLookbackHours: Long,
 )
@@ -28,6 +35,8 @@ data class FilterConfig(
     val excludeNewcomerOnly: Boolean,
     val excludeJobTypeKeywords: List<String>,
     val excludeTitleKeywords: List<String>,
+    /** 근무지에 하나라도 포함돼야 통과. 빈 리스트면 미적용 */
+    val allowedLocationKeywords: List<String>,
     /** 제목·키워드·직무명 중 하나라도 포함해야 통과. 빈 리스트면 미적용 */
     val requireAnyKeyword: List<String>,
 )
@@ -85,19 +94,34 @@ data class AppConfig(
             return AppConfig(
                 saramin = SaraminConfig(
                     accessKeyEnv = s.path("accessKeyEnv").asText("SARAMIN_ACCESS_KEY"),
-                    keywords = s.strList("keywords").ifEmpty { error("saramin.keywords가 비어 있습니다") },
-                    locMcd = s.path("locMcd").asText(""),
+                    keywords = s.strList("keywords"),
+                    locations = s.path("locations").map { loc ->
+                        val params = listOf("loc_cd", "loc_mcd", "loc_bcd")
+                            .mapNotNull { k -> loc.get(k)?.asText()?.takeIf(String::isNotBlank)?.let { k to it } }
+                            .toMap()
+                        require(params.size == 1) {
+                            "saramin.locations 항목마다 loc_cd / loc_mcd / loc_bcd 중 하나만 넣어주세요: $loc"
+                        }
+                        LocationQuery(loc.path("name").asText(params.values.first()), params)
+                    },
                     jobMidCd = s.path("jobMidCd").asText(""),
+                    jobCd = s.path("jobCd").asText(""),
+                    indCd = s.path("indCd").asText(""),
                     excludeDirectHire = s.path("excludeDirectHire").asBoolean(true),
-                    maxPagesPerKeyword = s.path("maxPagesPerKeyword").asInt(3),
+                    maxPagesPerQuery = s.path("maxPagesPerQuery").asInt(5),
                     initialLookbackHours = s.path("initialLookbackHours").asLong(72),
-                ),
+                ).also {
+                    require(it.keywords.isNotEmpty() || it.jobCd.isNotBlank() || it.jobMidCd.isNotBlank()) {
+                        "saramin.keywords 또는 jobCd/jobMidCd 중 하나는 지정해야 합니다"
+                    }
+                },
                 filter = FilterConfig(
                     myExperienceYears = f.req("myExperienceYears").asInt(),
                     experienceStretchYears = f.path("experienceStretchYears").asInt(1),
                     excludeNewcomerOnly = f.path("excludeNewcomerOnly").asBoolean(true),
                     excludeJobTypeKeywords = f.strList("excludeJobTypeKeywords"),
                     excludeTitleKeywords = f.strList("excludeTitleKeywords"),
+                    allowedLocationKeywords = f.strList("allowedLocationKeywords"),
                     requireAnyKeyword = f.strList("requireAnyKeyword"),
                 ),
                 crawler = CrawlerConfig(

@@ -1,11 +1,16 @@
 {
   "saramin": {
     "accessKeyEnv": "SARAMIN_ACCESS_KEY",
-    "keywords": ["Kotlin", "Spring", "백엔드"],
-    "locMcd": "",
-    "jobMidCd": "",
+    "keywords": [],
+    "locations": [
+      { "name": "서울 전체", "loc_mcd": "101000" },
+      { "name": "성남시(분당·수정·중원)", "loc_cd": "102180,102190,102200,102210" }
+    ],
+    "jobMidCd": "2",
+    "jobCd": "84,87,235,243,291,292",
+    "indCd": "",
     "excludeDirectHire": true,
-    "maxPagesPerKeyword": 3,
+    "maxPagesPerQuery": 5,
     "initialLookbackHours": 72
   },
   "filter": {
@@ -13,8 +18,9 @@
     "experienceStretchYears": 1,
     "excludeNewcomerOnly": true,
     "excludeJobTypeKeywords": ["계약직", "파견", "인턴", "프리랜서", "위촉"],
-    "excludeTitleKeywords": ["프론트엔드", "퍼블리셔", "안드로이드", "iOS", "QA"],
-    "requireAnyKeyword": ["Kotlin", "Java", "Spring", "백엔드", "Backend", "서버"]
+    "excludeTitleKeywords": ["프론트엔드", "프론트", "퍼블리셔", "안드로이드", "iOS", "QA", "React", "Vue"],
+    "allowedLocationKeywords": ["서울", "성남"],
+    "requireAnyKeyword": []
   },
   "crawler": {
     "delayMillis": 3000,

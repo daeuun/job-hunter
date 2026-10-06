@@ -15,6 +15,12 @@ class HardFilter(private val config: FilterConfig) {
         config.excludeTitleKeywords.firstOrNull { job.title.contains(it, ignoreCase = true) }?.let {
             return "제목 제외 키워드($it)"
         }
+        // 근무지가 여러 곳인 공고는 하나라도 맞으면 통과
+        if (config.allowedLocationKeywords.isNotEmpty() &&
+            config.allowedLocationKeywords.none { job.location.contains(it) }
+        ) {
+            return "근무지 제외(${job.location})"
+        }
 
         val exp = job.experience
         if (config.excludeNewcomerOnly && exp.code == 1) return "신입 전용"

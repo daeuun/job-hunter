@@ -35,8 +35,11 @@ vi resume.md                  # 이력서 본문을 마크다운/텍스트로 �
 
 | 항목 | 설명 |
 | --- | --- |
-| `saramin.keywords` | 키워드마다 따로 호출합니다 (API가 AND/OR 미지원) |
-| `saramin.locMcd`, `jobMidCd` | 지역·직무 코드. [사람인 코드표](https://oapi.saramin.co.kr/guide/code-table2)에서 확인 후 입력. 빈 값이면 미적용 |
+| `saramin.keywords` | 키워드마다 따로 호출합니다 (API가 AND/OR 미지원). 비워도 되지만 `jobCd`/`jobMidCd`가 필요합니다 |
+| `saramin.locations` | 지역 그룹별로 따로 호출합니다. 항목마다 `loc_cd`/`loc_mcd`/`loc_bcd` 중 하나만. 비우면 지역 필터 없음 |
+| `saramin.jobMidCd`, `jobCd`, `indCd` | 직무·업종 코드. [사람인 코드표](https://oapi.saramin.co.kr/guide/code-table2)에서 확인 후 입력. 빈 값이면 미적용 |
+| `saramin.maxPagesPerQuery` | (지역 × 키워드)당 최대 페이지 수. 도달하면 로그에 경고 |
+| `filter.allowedLocationKeywords` | 근무지에 하나라도 포함돼야 통과. 빈 리스트면 미적용 |
 | `filter.myExperienceYears` | **실무 재직 기간 기준** 경력(년). 사이드프로젝트 기간은 넣지 않습니다 |
 | `filter.experienceStretchYears` | 요구 최소경력이 `내 경력 + N`년 이하면 통과 |
 | `filter.excludeJobTypeKeywords` | 근무형태 제외어. 단, `정규직`이 함께 열린 공고는 통과 |
